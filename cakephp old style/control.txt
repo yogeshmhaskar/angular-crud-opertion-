@@ -1,0 +1,99 @@
+public function district_new() {
+        try {
+            $this->loadModel('division');
+            $this->loadModel('District');
+            $this->loadModel('State');
+
+            $this->set('districtrecord', NULL);
+            $this->set('actiontypeval', NULL);
+            $this->set('hfactionval', NULL);
+            $this->set('hfid', NULL);
+            $this->set('hfupdateflag', NULL);
+            $this->set('laug', NULL);
+
+            $user_id = $this->Auth->User("user_id");
+            $stateid = $this->Auth->User("state_id");
+
+            $statename = $this->Session->read("state_name_en");
+            //  pr($statename);
+            $laug = $this->Session->read("sess_langauge");
+            $state = $this->State->find('all', array('conditions' => array('state_id' => $stateid)));
+
+            // pr($this->State->find('all', array('conditions' => array('state_id' => $stateid))));exit;
+
+            $this->set('state', $state[0]['State']['state_name_en']);
+
+            $this->set('districtrecord', $this->District->find('all'));
+
+            if ($laug == 'en') {
+                $this->set('state', $state[0]['State']['state_name_en']);
+            } else {
+                $this->set('state', $state[0]['State']['state_name_ll']);
+            }
+
+
+            if ($this->request->is('post')) {
+
+                $actiontype = $_POST['actiontype'];
+                $hfactionval = $_POST['hfaction'];
+                $hfid = $_POST['hfid'];
+                $this->set('hfid', $hfid);
+
+                $date = date('Y/m/d H:i:s');
+                $creation_date = date('Y/m/d');
+                $ip = $_SERVER['REMOTE_ADDR'];
+
+                $this->request->data['district_new']['stateid'] = $stateid;
+                $stateid = $this->Auth->User("state_id");
+
+                if ($actiontype == '1') {
+
+                    $this->set('actiontypeval', $actiontype);
+                    $this->set('hfactionval', $hfactionval);
+                    if ($hfactionval == 'S') {
+
+                        $this->request->data['district_new']['ip'] = $ip;
+                        $this->request->data['district_new']['user_id'] = $user_id;
+                        $this->request->data['district_new']['creation_date'] = $creation_date;
+                        // pr($this->request->data);exit;
+                        if ($this->request->data['hfupdateflag'] == 'Y') {
+                            $this->request->data['district_new']['id'] = $this->request->data['hfid'];
+                            $actionvalue = "Updated";
+                        } else {
+                            $actionvalue = "Saved";
+                        }
+                        if ($this->District->save($this->request->data['district_new'])) {
+                            //  pr($this->request->data);exit;
+                            $this->Session->setFlash(__("Record $actionvalue Successfully"));
+                            $this->redirect(array('controller' => 'Masters', 'action' => 'district_new'));
+                            $this->set('districtrecord', $this->District->find('all'));
+                        } else {
+                            $this->Session->setFlash(__('Record Not Saved '));
+                        }
+                    }
+                }
+                if ($actiontype == 2) {
+                    $this->set('hfupdateflag', 'Y');
+                }
+
+                if ($actiontype == '3') {
+                    //echo('hii');
+                    $this->set('actiontypeval', $actiontype);
+
+                    if ($hfid != NULL) {
+                        $this->District->id = $hfid;
+
+                        if ($this->District->delete()) {
+                            $this->Session->setFlash(__('Record Deleted Successfully'));
+                            $this->redirect(array('controller' => 'Masters', 'action' => 'district_new'));
+                        } else {
+                            $this->Session->setFlash(__('Record Not Deleted'));
+                        }
+                    }
+                    $this->set('districtrecord', $this->District->find('all'));
+                }
+            }
+        } catch (Exception $exc) {
+            
+        }
+    }

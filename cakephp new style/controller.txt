@@ -1,0 +1,264 @@
+ public function employee() {
+        try {
+            $this->check_role_escalation();
+            $this->loadModel('State');
+            $this->loadModel('User');
+            $this->loadModel('salutation');
+            $this->loadModel('qualification');
+            $this->loadModel('designation');
+            $this->loadModel('office');
+            $this->loadModel('department');
+            $this->loadModel('employee');
+            $this->set('actiontypeval', NULL);
+            $this->set('hfactionval', NULL);
+            $this->set('hfid', NULL);
+            $this->set('hfupdateflag', NULL);
+              $this->set('employeerecord', NULL);
+            
+//              $this->set('employeerecord', NULL);
+            $created_date = date('Y/m/d');
+            $user_id = $this->Session->read("session_user_id");
+            $stateid = $this->Auth->User("state_id");
+            $statename = $this->Session->read("state_name_en");
+            $laug = $this->Session->read("sess_langauge");
+            $this->set('laug', $laug);
+            $this->set('corp_coun', ClassRegistry::init('corporationclass')->find('list', array('fields' => array('id', 'class_description_en'), 'order' => array('class_description_en' => 'ASC'))));
+            $this->set('officedec', ClassRegistry::init('office')->find('list', array('fields' => array('office_id', 'office_name_en'), 'order' => array('office_name_en' => 'ASC'))));
+            $this->set('designationdec', ClassRegistry::init('designation')->find('list', array('fields' => array('desg_id', 'desg_desc_en'), 'order' => array('desg_desc_en' => 'ASC'))));
+//            $this->set('employeerecord', $this->employee->find('all'));
+            
+             $employeerecord = $this->employee->query("select * from ngdrstab_mst_employee A inner join  ngdrstab_mst_user B on A.emp_code= B.emp_code");
+//            echo $employeerecord;exit;
+//            $empcode=$employeerecord['employee']['emp_code'];
+//           
+//            $empcode_user=$this->employee->query("select * from ngdrstab_mst_user where emp_code=?", array($roleid));
+        
+             
+                $this->set('employeerecord', $employeerecord);
+            $date = date('Y/m/d H:i:s');
+            $created_date = date('Y/m/d');
+            $this->loadModel('NGDRSErrorCode');
+            $result_codes = $this->NGDRSErrorCode->find("all");
+            $this->set('result_codes', $result_codes);
+            $this->loadModel('language');
+            $this->loadModel('mainlanguage');
+            //languages are loaded firstly from config (from table)
+            $languagelist = $this->mainlanguage->find('all', array('fields' => array('id', 'language_name', 'language_code'), 'joins' => array(
+                    array(
+                        'table' => 'ngdrstab_conf_language',
+                        'alias' => 'conf',
+                        'type' => 'inner',
+                        'foreignKey' => false,
+                        'conditions' => array('conf.language_id = mainlanguage.id')
+                    )), 'order' => 'conf.language_id ASC'));
+            $this->set('languagelist', $languagelist);
+
+            $this->set('type', ClassRegistry::init('authenticate_type')->find('list', array('fields' => array('user_auth_type_id', 'auth_type_desc'))));
+//            $searchvillage = ClassRegistry::init('role')->find('list', array('fields' => array('role.role_id', 'role.role_name'), 'conditions' => array('display_flag' => 'Y')));
+//            pr($searchvillage);exit;
+            $this->set('role', ClassRegistry::init('role')->find('list', array('fields' => array('role.role_id', 'role.role_name'), 'conditions' => array('display_flag' => 'Y'))));
+            $salutation = $this->salutation->find('list', array('fields' => array('salutation.salutation_id', 'salutation.salutation_desc_' . $laug)));
+            $this->set('salutation', $salutation);
+
+            $qualification = $this->qualification->find('list', array('fields' => array('qualification.qualification_id', 'qualification.qualification_desc_' . $laug)));
+            $this->set('qualification', $qualification);
+
+            $designation = $this->designation->find('list', array('fields' => array('designation.desg_id', 'designation.desg_desc_en')));
+            $this->set('designation', $designation);
+
+            $office = $this->office->find('list', array('fields' => array('office_id', 'office.office_name_en')));
+            $this->set('office', $office);
+
+            $department = $this->department->find('list', array('fields' => array('department.dept_id', 'department.dept_name_en')));
+            $this->set('department', $department);
+
+            $State = $this->State->find('list', array('fields' => array('state_id', 'state_name_en'), 'order' => array('state_name_en' => 'ASC')));
+            $this->set('State', $State);
+            $this->loadModel('District');
+            $District = $this->District->find('list', array('fields' => array('id', 'district_name_en'), 'order' => array('district_name_en' => 'ASC')));
+            $this->set('District', $District);
+            $this->loadModel('taluka');
+            $taluka = $this->taluka->find('list', array('fields' => array('id', 'taluka_name_en'), 'order' => array('taluka_name_en' => 'ASC')));
+            $this->set('taluka', $taluka);
+
+            $this->loadModel('id_type');
+            $idtype = $this->id_type->find('list', array('fields' => array('identificationtype_id', 'identificationtype_desc_en'), 'order' => array('identificationtype_desc_en' => 'ASC')));
+            $this->set('idtype', $idtype);
+
+            $this->set('Empcode', ClassRegistry::init('employee')->find('list', array('fields' => array('emp_code', 'name'), 'order' => array('emp_code' => 'ASC'))));
+
+            $this->loadModel('hintquestion');
+            $hintquestion = $this->hintquestion->find('list', array('fields' => array('id', 'questions'), 'order' => array('questions' => 'ASC')));
+            $this->set('hintquestion', $hintquestion);
+            //adding field list dynamically from language list
+            $fieldlist = array();
+            $fieldlist['emp_code']['text'] = 'is_required,is_alphanumdashslash,is_maxlength20';
+            $fieldlist['designation_id']['select'] = 'is_select_req';
+            $fieldlist['office_id']['select'] = 'is_select_req';
+            $fieldlist['salutation']['select'] = 'is_select_req';
+            $fieldlist['emp_fname']['text'] = 'is_required,is_alphaspace,is_maxlength20';
+            $fieldlist['emp_mname']['text'] = 'is_alphaspace,is_minmaxlength20'; //EMPTY ALLOW
+            $fieldlist['emp_lname']['text'] = 'is_required,is_alphaspace,is_maxlength20';
+            $fieldlist['qualification_id']['select'] = 'is_select_req';
+            $fieldlist['dept_id']['select'] = 'is_select_req';
+//            $fieldlist['reporting_officer_email_id']['text'] = 'is_email';
+            $fieldlist['building_no']['text'] = 'is_alphanumspacedashdotslashroundbrackets,is_minmaxlength20';
+            $fieldlist['flat_no']['text'] = 'is_numeric';
+            $fieldlist['road_name']['text'] = 'is_alphanumeric,is_minmaxlength20';
+            $fieldlist['state_id']['select'] = 'is_select_req';
+            $fieldlist['dist_id']['select'] = 'is_select_req';
+            $fieldlist['taluka_id']['select'] = 'is_select_req';
+            $fieldlist['locality']['text'] = 'is_alphanumspacedashdotcommaroundbrackets,is_minmaxlength20';
+            $fieldlist['city']['text'] = 'is_required,is_alphaspace,is_maxlength20';
+            $fieldlist['village']['text'] = 'is_required,is_alphaspacedashdotcommacolon,is_maxlength20';
+            $fieldlist['pincode']['text'] = 'is_pincode';
+            $fieldlist['contact_no']['text'] = 'is_required,is_mobileindian'; //9999999999
+            $fieldlist['contact_no1']['text'] = 'is_mobileindian';
+//contact_no
+            $fieldlist['email_id']['text'] = 'is_email,is_maxlength30';
+            $fieldlist['id_type']['select'] = 'is_select_req';
+            $fieldlist['uid_no']['text'] = 'is_required,is_uidnum';
+            $fieldlist['hint_question']['select'] = 'is_select_req';
+            $fieldlist['hint_answer']['text'] = 'is_required,is_alphanumeric';
+            //  $fieldlist['mobile_no']['text'] = 'is_mobileindian';
+//dependent field
+            $fieldlist['corp_coun_id']['select'] = 'is_select_req';
+            $fieldlist['authetication_type']['select'] = 'is_select_req';
+            $fieldlist['username']['text'] = 'is_required,is_username';
+            $fieldlist['password']['text'] = 'is_required,is_password';
+            $fieldlist['r_password']['text'] = 'is_required,is_password';
+            $fieldlist['full_name']['text'] = 'is_alphaspace';
+            $fieldlist['mobile_no']['text'] = 'is_required,is_mobileindian';
+            $fieldlist['role_id']['select'] = 'is_select_req';
+
+            $this->set('fieldlist', $fieldlist);
+            foreach ($fieldlist as $key => $valrule) {
+                $errarr[$key . '_error'] = "";
+            }
+            $this->set("errarr", $errarr);
+            $emp_id = $this->employee->query("select max(emp_id) as empid from ngdrstab_mst_employee");
+            $empid = $emp_id[0][0]['empid'];
+            if ($empid != Null) {
+                $empid = $empid + 1;
+            } else {
+                $empid = 1;
+            }
+
+
+            $this->set('empid', $empid);
+
+            $empcode = 'EMP0' . $empid;
+
+            $this->set('empcode', $empcode);
+            if ($this->request->is('post')) {
+
+                $officeid = $this->request->data['employee']['office_id'];
+                $this->request->data['employee']['emp_id'] = $empid;
+                $this->request->data['employee']['user_id'] = $this->Auth->User("user_id");
+                $this->request->data['employee']['req_ip'] = $this->request->clientIp();
+                if ($this->request->data['hfupdateflag'] != 'Y') {
+                    $this->request->data['employee']['emp_code'] = $empcode;
+                } else {
+                    $empcode = $this->request->data['employee']['emp_code'];
+                }
+                $this->request->data['employee']['usercreate_flag'] = $_POST['usercreate_flag'];
+                //server side
+                $this->request->data['employee']['password'] = $this->decrypt($this->request->data['employee']['password'], $this->Session->read("salt"));
+                $this->request->data['employee']['username'] = $this->decrypt($this->request->data['employee']['username'], $this->Session->read("salt"));
+                $this->request->data['employee']['r_password'] = $this->decrypt($this->request->data['employee']['r_password'], $this->Session->read("salt"));
+                $this->request->data['employee'] = $this->istrim($this->request->data['employee']);
+
+                $fieldlistnew = $this->modifyemployeefieldlist($fieldlist, $this->request->data['employee']);
+                $errarr = $this->validatedata($this->request->data['employee'], $fieldlistnew);
+
+                $newpassword = $this->request->data['employee']['password'] = sha1($this->request->data['employee']['password']);
+                $newpassword1 = $this->request->data['employee']['r_password'] = sha1($this->request->data['employee']['r_password']);
+                if ($this->ValidationError($errarr)) {
+                    if ($this->request->data['hfupdateflag'] == 'Y') {
+                        
+                        $this->request->data['employee']['emp_code'] = $this->request->data['hfid'];
+                        $actionvalue = "Updated";
+                    } else {
+                        $actionvalue = "Saved";
+                    }
+                    if ($newpassword == $newpassword1) {
+//                        pr($this->request->data['employee']);exit;
+                        if ($this->employee->save($this->request->data['employee'])) {
+                            $this->Session->setFlash(__("Record $actionvalue Successfully"));
+
+                            if ($_POST['usercreate_flag'] == 'Y') {
+                                $corp_coun_id = $this->request->data['employee']['corp_coun_id'];
+                                $authetication_type = $this->request->data['employee']['authetication_type'];
+                                $username = $this->request->data['employee']['username'];
+                                $password = $this->request->data['employee']['password'];
+                                $full_name = $this->request->data['employee']['full_name'];
+                                $emp_code = $this->request->data['employee']['emp_code'];
+//                             
+//                            $office_id=$this->request->data['employee']['office_id'];
+                                $mobile_no = $this->request->data['employee']['mobile_no'];
+                                $bioflag = $this->request->data['biometric_capture_flag'];
+                                $roleid = $this->request->data['employee']['role_id'];
+//                            $user_id = $this->request->data['employee']['user_id'];
+//                            $created_date = $this->request->data['employee']['created'];
+                                $req_ip = $this->request->data['employee']['req_ip'];
+                                $stateid = $this->Auth->User("state_id");
+//                            pr($office_id);
+//                            pr($emp_code);exit;
+//                            pr('hi');exit;$officeid
+//pr("insert into ngdrstab_mst_user (corp_coun_id,authetication_type,username,office_id,role_id,password,full_name,employee_id,mobile_no,state_id,req_ip,biometric_capture_flag)"$created_date
+//       . " values(" . $corp_coun_id . ",'" . $authetication_type . "','" . $username . "'," . $office_id . "," . $roleid . ",'" . $password . "','" . $full_name . "','" . $emp_code . "'," . $mobile_no . "," . $stateid . ",'" . $req_ip . "','" . $bioflag . "')");exit;
+                               
+
+                                if ($this->request->data['hfupdateflag'] == 'Y') {
+                                  $getmodelid = $this->User->query("select user_id,module_id from ngdrstab_mst_role where role_id=?", array($roleid));
+                                $moduleid = $getmodelid[0][0]['module_id'];
+
+                                
+                                $updatequery = $this->User->query( "update ngdrstab_mst_user set corp_coun_id=" . $corp_coun_id . ",authetication_type='" . $authetication_type . "',username='" . $username . "',office_id=" . $officeid . ",role_id=" . $roleid . ",module_id=" . $moduleid . ",password='" . $password . "',full_name='" . $full_name . "',emp_code='" . $emp_code . "',mobile_no=" . $mobile_no . ",created='" . $created_date . "',state_id=" . $stateid . ",req_ip='" . $req_ip . "',biometric_capture_flag='" . $bioflag . "' where emp_code='".$emp_code."'");
+//                                $updatequery = $this->User->query("insert into ngdrstab_mst_user (corp_coun_id,authetication_type,username,office_id,role_id,module_id,password,full_name,emp_code,mobile_no,created,state_id,req_ip,biometric_capture_flag)"
+//                                        . " values(" . $corp_coun_id . ",'" . $authetication_type . "','" . $username . "'," . $officeid . "," . $roleid . "," . $moduleid . ",'" . $password . "','" . $full_name . "','" . $emp_code . "'," . $mobile_no . ",'" . $created_date . "'," . $stateid . ",'" . $req_ip . "','" . $bioflag . "')");
+//                               pr($updatequery);exit;
+                                }
+                                else{
+//                                    echo 1;exit;
+                                $getmodelid = $this->User->query("select user_id,module_id from ngdrstab_mst_role where role_id=?", array($roleid));
+                                $moduleid = $getmodelid[0][0]['module_id'];
+
+                                $savequery = $this->User->query("insert into ngdrstab_mst_user (corp_coun_id,authetication_type,username,office_id,role_id,module_id,password,full_name,emp_code,mobile_no,created,state_id,req_ip,biometric_capture_flag)"
+                                        . " values(" . $corp_coun_id . ",'" . $authetication_type . "','" . $username . "'," . $officeid . "," . $roleid . "," . $moduleid . ",'" . $password . "','" . $full_name . "','" . $emp_code . "'," . $mobile_no . ",'" . $created_date . "'," . $stateid . ",'" . $req_ip . "','" . $bioflag . "')");
+                               
+                                 if ($savequery == NULL) {
+
+                                    $getmodelid = $this->User->query("select user_id,module_id from ngdrstab_mst_role where role_id=?", array($roleid));
+                                    $moduleid = $getmodelid[0][0]['module_id'];
+                                    $getusername = $this->User->query("select user_id,username from ngdrstab_mst_user where username=?", array($username));
+
+                                    // pr($getusername);exit;
+                                    $userid = $getusername[0][0]['user_id'];
+                                    $username = $getusername[0][0]['username'];
+
+                                    $savequery = $this->User->query("insert into ngdrstab_mst_userroles (user_id,username,module_id,role_id,created,req_ip,state_id)"
+                                            . " values(" . $userid . ",'" . $username . "'," . $moduleid . "," . $roleid . ",'" . $created_date . "','" . $req_ip . "'," . $stateid . ")");
+                                }
+                                
+                                
+                                }
+                              
+                            }
+
+                            $this->redirect(array('controller' => 'Masters', 'action' => 'employee'));
+                        }
+                    } else {
+                        $errarr['re_user_pass_error'] = 'Password Did not Match';
+                        $this->Session->setFlash(__('Password Did not Match'));
+                        // $this->redirect(array('action' => 'citizenregistration'));
+                    }
+                }
+            }
+            $this->Session->write("salt", rand(111111, 999999));
+        } catch (Exception $ex) {
+            $this->Session->setFlash(__('Record Cannot be displayed. Error :' . $ex->getMessage())
+            );
+            //  return $this->redirect(array('controller' => 'Error', 'action' => 'exception_occurred'));
+        }
+    }
