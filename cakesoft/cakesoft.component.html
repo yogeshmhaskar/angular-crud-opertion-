@@ -1,0 +1,79 @@
+<form #form="ngForm" (ngSubmit)="Save(form.value)">
+
+<div class="row">
+  <div class="col-md-10 mx-auto">
+      <div class="card border-secondary">
+          <div class="card-header">
+              <h3 class="mb-0 my-2">CakeSoft Technology</h3>
+          </div>
+          <div class="card-body">
+<div class="form-group row">
+  <label for="example-search-input" class="col-2 col-form-label">Name</label>
+  <div class="col-5">
+    <input class="form-control" [(ngModel)]="nm"  type="text" name="name" #name="ngModel" ngModel>
+  </div>
+</div>
+<div class="form-group row">
+  <label for="example-email-input" class="col-2 col-form-label">Address</label>
+  <div class="col-5">
+    <input class="form-control" [(ngModel)]="add" type="text" name="address" #address="ngModel" ngModel>
+  </div>
+</div>
+<div class="form-group row">
+  <label for="example-url-input" class="col-2 col-form-label">Mobile No</label>
+  <div class="col-5">
+    <input class="form-control" [(ngModel)]="mno" type="text" name="mobileno" #mobileno="ngModel"  ngModel>
+  </div>
+</div>
+<input type="hidden" class="form-control" name="_id" #id="ngModel" ngModel [(ngModel)]="id1">
+ <h1>{{resmsg}}</h1> 
+
+  <button type="submit"  name="save" class="btn btn-primary">Save</button>
+
+  <button  type="button" (click)="update(name.value,address.value,mobileno.value,id.value)" name="update" class="btn btn-primary">Update</button>
+
+  
+
+  
+  <table class="table table-bordered table-sm">
+    <thead>
+      <tr>
+       <th>Sr.No</th>
+        <th>Name</th>
+        <th>Address</th>
+        <th>Mobile No</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let cakerec of cakerec; let i=index">
+
+          <td>{{i+1}}</td>
+          <td>{{cakerec.name}}</td>
+          <td>{{cakerec.address}}</td>
+          <td>{{cakerec.mobileno}}</td>
+              
+        <td>
+         <button class="btn btn-warning" type="button" (click)="Editrec(cakerec._id)">
+            <span class="glyphicon glyphicon-pencil"></span>Edit
+         </button>
+               
+
+          <button class="btn btn-warning" type="button" (click)="Delete(cakerec._id)">
+              <span class="glyphicon glyphicon-remove"></span>Delete
+         </button>
+          </td>
+      </tr>
+      
+    </tbody>
+  </table>
+
+
+
+</div>
+</div>
+</div>
+</div>
+
+</form>
+
